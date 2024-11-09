@@ -53,9 +53,10 @@ func ParseRequest(request *http.Request) (*ParsedSignature, error) {
 	if auth, ok := request.Header["Authorization"]; ok {
 		authz = auth[0]
 	} else {
-		return nil, errors.New("Missing Header error: no authorization header present in the request")
+		return nil, errors.New("missing Header error: no authorization header present in the request")
 	}
 
+outer:
 	for _, code := range authz {
 		c := string(code)
 		switch state {
@@ -65,7 +66,7 @@ func ParseRequest(request *http.Request) (*ParsedSignature, error) {
 			} else {
 				state = stateParams
 			}
-			break
+			break outer
 		case stateParams:
 			switch substate {
 			case paramsStateName:
@@ -74,21 +75,21 @@ func ParseRequest(request *http.Request) (*ParsedSignature, error) {
 					tmpName += c
 				} else if c == "=" {
 					if tmpName == "" {
-						return nil, errors.New("Invalid Header Error: bad param format")
+						return nil, errors.New("invalid Header Error: bad param format")
 					}
 					substate = paramsStateQuote
 				} else {
-					return nil, errors.New("Invalid Header Error: bad param format")
+					return nil, errors.New("invalid Header Error: bad param format")
 				}
-				break
+				break outer
 			case paramsStateQuote:
 				if c == "\"" {
 					tmpValue = ""
 					substate = paramsStateValue
 				} else {
-					return nil, errors.New("Invalid Header Error: bad param format")
+					return nil, errors.New("invalid Header Error: bad param format")
 				}
-				break
+				break outer
 			case paramsStateValue:
 				if c == "\"" {
 					parsed.params[tmpName] = tmpValue
@@ -96,17 +97,16 @@ func ParseRequest(request *http.Request) (*ParsedSignature, error) {
 				} else {
 					tmpValue += c
 				}
-				break
+				break outer
 			case paramsStateComma:
 				if c == "," {
 					tmpName = ""
 					substate = paramsStateName
 				} else {
-					return nil, errors.New("Invalid Header Error: bad param format")
+					return nil, errors.New("invalid Header Error: bad param format")
 				}
-				break
+				break outer
 			}
-			break
 		}
 	}
 
@@ -124,15 +124,15 @@ func ParseRequest(request *http.Request) (*ParsedSignature, error) {
 	}
 
 	if _, ok := parsed.params["keyId"]; !ok {
-		return nil, errors.New("Invalid Header Error: keyId was not specified")
+		return nil, errors.New("invalid Header Error: keyId was not specified")
 	}
 
 	if _, ok := parsed.params["algorithm"]; !ok {
-		return nil, errors.New("Invalid Header Error: algorithm was not specified")
+		return nil, errors.New("invalid Header Error: algorithm was not specified")
 	}
 
 	if _, ok := parsed.params["signature"]; !ok {
-		return nil, errors.New("Invalid Header Error: signature was not specified'")
+		return nil, errors.New("invalid Header Error: signature was not specified'")
 	}
 
 	if _, err := validateAlgorithm(parsed.Algorithm()); err != nil {
@@ -140,7 +140,7 @@ func ParseRequest(request *http.Request) (*ParsedSignature, error) {
 	}
 
 	// Build the signingString
-	var signingParts = make([]string, len(headers), len(headers))
+	var signingParts = make([]string, len(headers))
 	for i, h := range headers {
 		if h == "request-line" {
 			if !ParseStrict {
@@ -151,7 +151,7 @@ func ParseRequest(request *http.Request) (*ParsedSignature, error) {
 				signingParts[i] = fmt.Sprintf("%s %s %s", request.Method, request.RequestURI, request.Proto)
 			} else {
 				/* Strict parsing doesn't allow older draft headers. */
-				return nil, errors.New("Strict Parsing error: request-line is not a valid header with strict parsing enabled.")
+				return nil, errors.New("strict Parsing error: request-line is not a valid header with strict parsing enabled")
 			}
 		} else if h == "(request-target)" {
 			signingParts[i] = fmt.Sprintf("(request-target): %s %s", strings.ToLower(request.Method), request.RequestURI)
@@ -163,7 +163,7 @@ func ParseRequest(request *http.Request) (*ParsedSignature, error) {
 			if value, ok := request.Header[http.CanonicalHeaderKey(h)]; ok {
 				signingParts[i] = h + ": " + value[0]
 			} else {
-				return nil, fmt.Errorf("Missing Header error: \"%s\" was not in the request.", h)
+				return nil, fmt.Errorf(`missing Header error: "%s" was not in the request`, h)
 			}
 		}
 	}
@@ -185,7 +185,7 @@ func ParseRequest(request *http.Request) (*ParsedSignature, error) {
 		}
 
 		if skew > DefaultClockSkew {
-			return nil, fmt.Errorf("Expired Request error: clock skew of %v was greater than %v", skew, DefaultClockSkew)
+			return nil, fmt.Errorf("expired Request error: clock skew of %v was greater than %v", skew, DefaultClockSkew)
 		}
 	}
 

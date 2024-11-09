@@ -1,14 +1,13 @@
-// +build integration
-
 package httpsig
 
 import (
 	"bytes"
-	"github.com/stretchr/testify/assert"
 	"net/http"
 	"net/http/httptest"
 	"os/exec"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestNodeClientCanCallServer(t *testing.T) {

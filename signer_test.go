@@ -2,12 +2,13 @@ package httpsig
 
 import (
 	"fmt"
-	"github.com/dgrijalva/jwt-go"
-	"github.com/stretchr/testify/assert"
 	"io/ioutil"
 	"net/http"
 	"testing"
 	"time"
+
+	"github.com/dgrijalva/jwt-go"
+	"github.com/stretchr/testify/assert"
 )
 
 // These tests just verify that a signature is made, the verify tests will verify that the signature was valid

@@ -2,18 +2,16 @@ package httpsig
 
 import (
 	"crypto"
-	"crypto/dsa"
 	"crypto/hmac"
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/x509"
-	"encoding/asn1"
 	"encoding/base64"
 	"encoding/pem"
 	"errors"
 	"fmt"
 	"net/http"
-	u "net/url"
+	"net/url"
 	"strings"
 	"time"
 )
@@ -98,7 +96,7 @@ func (rs *RequestSigner) SignRequest(request *http.Request, headers []string, ex
 		} else {
 			values, ok := request.Header[http.CanonicalHeaderKey(h)]
 			if !ok {
-				return fmt.Errorf("No value for header \"%s\"", h)
+				return fmt.Errorf("no value for header \"%s\"", h)
 			}
 			lines = append(lines, fmt.Sprintf("%s: %s", h, values[0]))
 		}
@@ -112,7 +110,7 @@ func (rs *RequestSigner) SignRequest(request *http.Request, headers []string, ex
 	return nil
 }
 
-func getPathAndQueryFromURL(url *u.URL) (pathAndQuery string) {
+func getPathAndQueryFromURL(url *url.URL) (pathAndQuery string) {
 	pathAndQuery = url.Path
 	if pathAndQuery == "" {
 		pathAndQuery = "/"
@@ -154,26 +152,6 @@ func rsaSigner(key string, hash crypto.Hash) (Signer, error) {
 	}, nil
 }
 
-func dsaSigner(key string, hash crypto.Hash) (Signer, error) {
-	privateKey, err := getDsaKey(key)
-	if err != nil {
-		return noSigner, err
-	}
-	return func(data string) ([]byte, error) {
-		hashed := calcHash(data, hash)
-		qlen := len(privateKey.Q.Bytes())
-		if len(hashed) > qlen {
-			hashed = hashed[:qlen]
-		}
-		r, s, err := dsa.Sign(rand.Reader, privateKey, hashed)
-		if err != nil {
-			return nil, err
-		}
-
-		return asn1.Marshal(dsaSignature{r, s})
-	}, nil
-}
-
 func ecdsaSigner(key string, hash crypto.Hash) (Signer, error) {
 	block, _ := pem.Decode([]byte(key))
 	privateKey, err := x509.ParseECPrivateKey(block.Bytes)
@@ -192,14 +170,12 @@ func getSigner(alg *hashAlgorithm, key string) (Signer, error) {
 		return hmacSigner(key, alg.hash)
 	case "rsa":
 		return rsaSigner(key, alg.hash)
-	case "dsa":
-		return dsaSigner(key, alg.hash)
 	case "ecdsa":
 		return ecdsaSigner(key, alg.hash)
 	}
-	return nil, fmt.Errorf("Unsupported signing algorithm: %v", alg)
+	return nil, fmt.Errorf("unsupported signing algorithm: %v", alg)
 }
 
 func noSigner(data string) ([]byte, error) {
-	return nil, errors.New("Invalid signer")
+	return nil, errors.New("invalid signer")
 }

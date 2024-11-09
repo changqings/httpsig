@@ -2,19 +2,15 @@ package httpsig
 
 import (
 	"crypto"
-	"crypto/dsa"
-	"encoding/asn1"
 	"encoding/pem"
 	"errors"
 	"fmt"
-	"math/big"
 	"strings"
 )
 
 var validAlgorithms = map[string]bool{
 	"hmac":  true,
 	"rsa":   true,
-	"dsa":   true,
 	"ecdsa": true,
 }
 
@@ -29,24 +25,18 @@ type hashAlgorithm struct {
 	hash crypto.Hash
 }
 
-type dsaSignature struct {
-	R, S *big.Int
-}
-
 func autoDetectAlgorithm(key string) (*hashAlgorithm, error) {
 	block, _ := pem.Decode([]byte(key))
 	if block == nil {
-		return nil, errors.New("Could not determine key format, key was not in PEM format")
+		return nil, errors.New("could not determine key format, key was not in PEM format")
 	}
 	switch block.Type {
 	case "RSA PRIVATE KEY":
 		return &hashAlgorithm{"rsa", crypto.SHA256}, nil
-	case "DSA PRIVATE KEY":
-		return &hashAlgorithm{"dsa", crypto.SHA256}, nil
 	case "EC PRIVATE KEY":
 		return &hashAlgorithm{"ecdsa", crypto.SHA256}, nil
 	default:
-		return nil, fmt.Errorf("Could not determine key format (pem block type '%s')", block.Type)
+		return nil, fmt.Errorf("dould not determine key format (pem block type '%s')", block.Type)
 	}
 
 }
@@ -85,26 +75,4 @@ func calcHash(data string, hash crypto.Hash) []byte {
 	h := hash.New()
 	h.Write([]byte(data))
 	return h.Sum(nil)
-}
-
-type tempDsaKey struct {
-	E1, P, Q, G, Y, X *big.Int
-}
-
-// PEM DSA format doesn't parse using any of the built-in crypto methods, so this function parses a DSA private key from a PEM file
-func getDsaKey(key string) (privateKey *dsa.PrivateKey, err error) {
-	block, _ := pem.Decode([]byte(key))
-
-	tmpKey := tempDsaKey{}
-	_, err = asn1.Unmarshal(block.Bytes, &tmpKey)
-	if err != nil {
-		return nil, err
-	}
-	privateKey = &dsa.PrivateKey{}
-	privateKey.P = tmpKey.P
-	privateKey.Q = tmpKey.Q
-	privateKey.G = tmpKey.G
-	privateKey.Y = tmpKey.Y
-	privateKey.X = tmpKey.X
-	return
 }

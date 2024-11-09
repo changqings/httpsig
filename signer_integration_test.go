@@ -1,16 +1,15 @@
-// +build integration
-
 package httpsig
 
 import (
 	"bufio"
 	"fmt"
-	"github.com/stretchr/testify/assert"
 	"io"
 	"net/http"
 	"os"
 	"os/exec"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestClientCanCallNodeServer(t *testing.T) {
@@ -84,7 +83,6 @@ func startNodeServer(t *testing.T, port string, ch chan *exec.Cmd) {
 
 	ch <- cmd
 
-	return
 }
 
 func logOut(t *testing.T, r *bufio.Reader, out chan string) {

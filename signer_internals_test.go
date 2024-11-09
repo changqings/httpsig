@@ -1,9 +1,10 @@
 package httpsig
 
 import (
-	"github.com/stretchr/testify/assert"
 	u "net/url"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func doGetPathAndQueryFromURL(urlString string) string {

@@ -5,7 +5,7 @@ httpsig is a go package with for [HTTP Signature](https://tools.ietf.org/html/dr
 ## Usage
 
 ```go
-import "gopkg.in/twindagger/httpsig.v1"
+import "githhub.com/changqings/httpsig"
 ```
 
 ### Client
@@ -49,7 +49,7 @@ func main() {
 
 ## Installation
 
-    go get gopkg.in/twindagger/httpsig.v1
+    go get github.com/changqings/httpsig
 
 ## License
 
